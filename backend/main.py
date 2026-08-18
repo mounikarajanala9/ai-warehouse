@@ -58,18 +58,37 @@ def startup_event():
 def health_check():
     return {"status": "healthy", "system": "Smart Warehouse Intelligence Platform", "version": "1.0.0"}
 
+from fastapi.responses import FileResponse, Response
+
+# Explicit Favicon Handler to prevent 500 status on missing favicon.ico
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    favicon_path = os.path.join(FRONTEND_DIR, "favicon.ico")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path)
+    return Response(status_code=204)
+
 # Serve frontend static files if directory exists
 if os.path.exists(FRONTEND_DIR):
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
     @app.get("/")
     def serve_index():
-        return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+        index_path = os.path.join(FRONTEND_DIR, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return Response(content="<h1>Smart Warehouse Platform API Active</h1>", media_type="text/html")
 
     # Catch-all for SPA client-side routes
     @app.get("/{full_path:path}")
     def catch_all(full_path: str):
+        if full_path.startswith("api/"):
+            return Response(status_code=404, content='{"detail": "Not Found"}', media_type="application/json")
         file_path = os.path.join(FRONTEND_DIR, full_path)
         if os.path.exists(file_path) and os.path.isfile(file_path):
             return FileResponse(file_path)
-        return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+        index_path = os.path.join(FRONTEND_DIR, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return Response(content="<h1>Smart Warehouse Platform API Active</h1>", media_type="text/html")
+
