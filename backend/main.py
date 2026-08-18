@@ -41,14 +41,18 @@ FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 @app.on_event("startup")
 def startup_event():
-    init_db()
-    with get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM products")
-        count = cursor.fetchone()[0]
-        if count == 0:
-            print("Seeding database with initial realistic warehouse data...")
-            seed_database(conn)
+    try:
+        init_db()
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM products")
+            count = cursor.fetchone()[0]
+            if count == 0:
+                print("Seeding database with initial realistic warehouse data...")
+                seed_database(conn)
+    except Exception as e:
+        print(f"Warning: Database startup initialization: {e}")
+
 
 @app.get("/api/health")
 def health_check():

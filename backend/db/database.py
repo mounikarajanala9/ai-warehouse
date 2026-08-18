@@ -2,7 +2,14 @@ import sqlite3
 import os
 from contextlib import contextmanager
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "warehouse.db")
+import tempfile
+
+# On Vercel / serverless environment, root directory is read-only, so write DB to /tmp
+if os.getenv("VERCEL") or not os.access(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), os.W_OK):
+    DB_PATH = os.path.join(tempfile.gettempdir(), "warehouse.db")
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "warehouse.db")
+
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
